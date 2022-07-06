@@ -17,9 +17,36 @@ from zookeeper import ZOOKEEPER_RULES
 
 
 def backchain_to_goal_tree(rules, hypothesis):
+    #print("hyp to check", hypothesis)
+    goalTree = [hypothesis];
     for rule in rules:
-        then = rule.consequent()
-        print(then[0])
+        consequents = rule.consequent()
+        for e in consequents:
+            #print("exp", e)
+            r = match(e, hypothesis)
+            #print("match re", r)
+            if r is not None:
+                antecedents = rule.antecedent()
+                if isinstance(antecedents, str):
+                    
+                    statem = populate(antecedents, r)
+                    #print("in if", statem)
+                    goalTree.append(backchain_to_goal_tree(rules, statem))
+                else:
+                    subTree = []
+                    for a in antecedents:
+                        statem = populate(a, r)
+                        #print("in else for loop", statem)
+                        subTree.append(backchain_to_goal_tree(rules, statem))
+                    if isinstance(antecedents, AND):
+                        goalTree.append(AND(subTree))
+                    else:
+                        goalTree.append(OR(subTree))
+                        
+                    
+    return simplify(OR(goalTree))           
+
+
     raise NotImplementedError
 
 # Here's an example of running the backward chainer - uncomment
